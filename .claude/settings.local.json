@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir /b \"c:\\\\Users\\\\Murat\\\\Desktop\\\\isaretler_diyari\\\\isaretler_diyari\")",
+      "Bash(where flutter *)",
+      "Bash(flutter --version)",
+      "PowerShell(flutter --version)",
+      "PowerShell(flutter pub get 2>&1)",
+      "PowerShell(flutter analyze 2>&1)",
+      "PowerShell(flutter build web --release 2>&1)"
+    ]
+  }
+}
