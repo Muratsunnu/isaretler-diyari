@@ -78,6 +78,15 @@ class _GameScreenState extends State<GameScreen> {
                   _Pill(icon: Icons.person, label: widget.playerName),
                   _Pill(icon: Icons.star, label: '${_game.score}'),
                   _Pill(
+                    icon: _game.livesThisLevel > 0
+                        ? Icons.favorite
+                        : Icons.heart_broken,
+                    label: '${_game.livesThisLevel}',
+                    color: _game.livesThisLevel > 0
+                        ? const Color(0xFFE53935)
+                        : const Color(0xFF9E9E9E),
+                  ),
+                  _Pill(
                     icon: Icons.help_outline,
                     label:
                         '${_game.questionsInCurrentLevel}/${IsaretlerGame.questionsPerLevel}',

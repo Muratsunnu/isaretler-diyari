@@ -10,6 +10,8 @@ class InfoOverlay extends StatelessWidget {
     final q = game.currentQuestion;
     if (q == null) return const SizedBox.shrink();
 
+    final outOfLives = game.isOutOfLivesInfo;
+
     return Container(
       color: Colors.black54,
       child: Center(
@@ -85,18 +87,53 @@ class InfoOverlay extends StatelessWidget {
                     q.explanation,
                     style: const TextStyle(fontSize: 15, height: 1.5),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
+                  if (outOfLives)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFEBEE),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFFE57373)),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.heart_broken,
+                              color: Color(0xFFC62828), size: 22),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Canın bitti! Bu sorudan puan yok, sıradaki engele geçiyoruz.',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Color(0xFFB71C1C),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  const SizedBox(height: 16),
                   SizedBox(
                     height: 52,
                     child: ElevatedButton.icon(
-                      onPressed: game.closeInfoAndRetry,
-                      icon: const Icon(Icons.refresh),
-                      label: const Text(
-                        'Anladım, tekrar deneyeceğim',
-                        style: TextStyle(fontSize: 16),
+                      onPressed: outOfLives
+                          ? game.closeInfoAndAdvance
+                          : game.closeInfoAndRetry,
+                      icon: Icon(
+                          outOfLives ? Icons.arrow_forward : Icons.refresh),
+                      label: Text(
+                        outOfLives
+                            ? 'Anladım, devam et'
+                            : 'Anladım, tekrar deneyeceğim',
+                        style: const TextStyle(fontSize: 16),
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2E7D32),
+                        backgroundColor: outOfLives
+                            ? const Color(0xFF455A64)
+                            : const Color(0xFF2E7D32),
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),

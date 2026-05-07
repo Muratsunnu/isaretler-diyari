@@ -43,8 +43,12 @@ class IsaretlerGame extends FlameGame {
   GameLevel currentLevel = GameLevel.level1;
   GameLevel? pendingNextLevel;
 
-  /// Her level'da en fazla 1 yanlış cevap → bilgi+tekrar; ikincide kayıt edip geç
-  bool _wrongUsedThisLevel = false;
+  /// Her level'da 1 can: yanlış cevapta tükenir. Tükenince retry yok.
+  static const int livesPerLevel = 1;
+  int livesThisLevel = livesPerLevel;
+  /// İnfo ekranı şu an "advance" modunda mı (canı tükenmiş, retry yok)
+  bool isOutOfLivesInfo = false;
+
   // Mevcut level'da kaç soru cevaplandı (3 olunca level biter)
   int questionsInCurrentLevel = 0;
 
@@ -188,24 +192,36 @@ class IsaretlerGame extends FlameGame {
   }
 
   void _handleWrong() {
-    if (!_wrongUsedThisLevel) {
-      // Bu level'daki tek joker harcanıyor: bilgi göster + tekrar dene
-      _wrongUsedThisLevel = true;
+    if (livesThisLevel > 0) {
+      // Can var → can düş, info göster, aynı soruya retry
+      livesThisLevel--;
+      isOutOfLivesInfo = false;
       phase = GamePhase.info;
       overlays.remove(questionOverlay);
       overlays.add(infoOverlay);
       onPhaseChange?.call();
     } else {
-      // Joker bitti — yanlışı kaydet, sonraki engele geç (info gösterme)
-      _onQuestionDone();
+      // Can yok → info göster ama retry yok, "Devam" ile sıradaki soru
+      isOutOfLivesInfo = true;
+      phase = GamePhase.info;
+      overlays.remove(questionOverlay);
+      overlays.add(infoOverlay);
+      onPhaseChange?.call();
     }
   }
 
-  void _onQuestionDone() {
+  void _onQuestionDone({bool success = true}) {
     questionsAsked++;
     questionsInCurrentLevel++;
     overlays.remove(questionOverlay);
-    _passObstacle();
+    _passObstacle(success: success);
+  }
+
+  /// Info ekranındaki "Devam et" — can yok, retry yok, sıradakine geç
+  void closeInfoAndAdvance() {
+    overlays.remove(infoOverlay);
+    isOutOfLivesInfo = false;
+    _onQuestionDone(success: false);
   }
 
   void closeInfoAndRetry() {
@@ -217,14 +233,15 @@ class IsaretlerGame extends FlameGame {
     onPhaseChange?.call();
   }
 
-  void _passObstacle() {
+  void _passObstacle({bool success = true}) {
     final obstacle = activeObstacle;
     if (obstacle != null) {
       obstacle.stopped = false;
     }
     phase = GamePhase.running;
     player.isRunning = true;
-    player.jump();
+    // Sadece doğru cevapta zıplar; yanlışta engel sessizce geçer
+    if (success) player.jump();
     onPhaseChange?.call();
 
     Future.delayed(const Duration(milliseconds: 800), () {
@@ -262,7 +279,8 @@ class IsaretlerGame extends FlameGame {
     // Level değişkenleri
     currentLevel = next;
     pendingNextLevel = null;
-    _wrongUsedThisLevel = false;
+    livesThisLevel = livesPerLevel; // Can yenilendi
+    isOutOfLivesInfo = false;
     questionsInCurrentLevel = 0;
 
     // Görsel temayı değiştir
