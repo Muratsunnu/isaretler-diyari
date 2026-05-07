@@ -128,86 +128,197 @@ class _QuestionOverlayState extends State<QuestionOverlay> {
                     ],
                   ),
                   const SizedBox(height: 18),
-                  Text(
-                    q.topic == PunctuationTopic.buyukHarf
-                        ? 'Boş bırakılan yere küçük mü, büyük mü?'
-                        : 'Boş bırakılan yere hangi noktalama işareti gelmeli?',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      color: Colors.black54,
-                    ),
-                  ),
+                  _buildQuestionHint(q),
                   const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFFF8E1),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFFFE082)),
-                    ),
-                    child: RichText(
-                      textAlign: TextAlign.center,
-                      text: TextSpan(
-                        style: const TextStyle(
-                          fontSize: 22,
-                          color: Colors.black87,
-                          height: 1.5,
-                        ),
-                        children: [
-                          TextSpan(text: q.before),
-                          const WidgetSpan(
-                            alignment: PlaceholderAlignment.middle,
-                            child: _Blank(),
-                          ),
-                          TextSpan(text: q.after),
-                        ],
-                      ),
-                    ),
-                  ),
+                  _buildQuestionContent(q),
                   const SizedBox(height: 24),
-                  Row(
-                    children: List.generate(q.options.length, (i) {
-                      final color = i == 0
-                          ? const Color(0xFF1976D2)
-                          : const Color(0xFFE65100);
-                      return Expanded(
-                        child: Padding(
-                          padding: EdgeInsets.only(
-                            right: i == 0 ? 8 : 0,
-                            left: i == 0 ? 0 : 8,
-                          ),
-                          child: SizedBox(
-                            height: 90,
-                            child: ElevatedButton(
-                              onPressed: () => game.answerQuestion(i),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: color,
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                elevation: 4,
-                              ),
-                              child: Text(
-                                q.options[i],
-                                style: const TextStyle(
-                                  fontSize: 48,
-                                  fontWeight: FontWeight.bold,
-                                  height: 1.0,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    }),
-                  ),
+                  _buildOptions(q, game),
                 ],
               ),
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildQuestionHint(Question q) {
+    String text;
+    switch (q.format) {
+      case QuestionFormat.fillBlank:
+        text = q.topic == PunctuationTopic.buyukHarf
+            ? 'Boş bırakılan yere küçük mü, büyük mü?'
+            : 'Boş bırakılan yere hangi noktalama işareti gelmeli?';
+        break;
+      case QuestionFormat.shortAnswer:
+        text = q.options.length == 2 &&
+                q.options[0] == 'Doğru' &&
+                q.options[1] == 'Yanlış'
+            ? 'Aşağıdaki ifade doğru mu, yanlış mı?'
+            : 'Aşağıdaki soruya cevap ver:';
+        break;
+      case QuestionFormat.longChoice:
+        text = 'Aşağıdaki seçeneklerden hangisi doğru?';
+        break;
+    }
+    return Text(
+      text,
+      style: const TextStyle(fontSize: 16, color: Colors.black54),
+    );
+  }
+
+  Widget _buildQuestionContent(Question q) {
+    if (q.format == QuestionFormat.fillBlank) {
+      // "Cümle [?] cümle"
+      return Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFF8E1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFFFE082)),
+        ),
+        child: RichText(
+          textAlign: TextAlign.center,
+          text: TextSpan(
+            style: const TextStyle(
+              fontSize: 22,
+              color: Colors.black87,
+              height: 1.5,
+            ),
+            children: [
+              TextSpan(text: q.before),
+              const WidgetSpan(
+                alignment: PlaceholderAlignment.middle,
+                child: _Blank(),
+              ),
+              TextSpan(text: q.after),
+            ],
+          ),
+        ),
+      );
+    }
+    // shortAnswer / longChoice → düz prompt metni
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF8E1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFFFE082)),
+      ),
+      child: Text(
+        q.prompt ?? '',
+        style: const TextStyle(
+          fontSize: 20,
+          color: Colors.black87,
+          height: 1.5,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOptions(Question q, IsaretlerGame game) {
+    // 1 karakterlik (sembol) şıklar → büyük yatay butonlar
+    final maxLen = q.options.map((o) => o.length).reduce((a, b) => a > b ? a : b);
+    final useBigSymbols = maxLen <= 1;
+
+    if (useBigSymbols) {
+      return Row(
+        children: List.generate(q.options.length, (i) {
+          final color = i == 0
+              ? const Color(0xFF1976D2)
+              : const Color(0xFFE65100);
+          return Expanded(
+            child: Padding(
+              padding: EdgeInsets.only(
+                right: i == 0 ? 8 : 0,
+                left: i == 0 ? 0 : 8,
+              ),
+              child: SizedBox(
+                height: 90,
+                child: ElevatedButton(
+                  onPressed: () => game.answerQuestion(i),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: color,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    elevation: 4,
+                  ),
+                  child: Text(
+                    q.options[i],
+                    style: const TextStyle(
+                      fontSize: 48,
+                      fontWeight: FontWeight.bold,
+                      height: 1.0,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        }),
+      );
+    }
+
+    // Uzun seçenekler → A/B kartları (dikey)
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: List.generate(q.options.length, (i) {
+        final color = i == 0
+            ? const Color(0xFF1976D2)
+            : const Color(0xFFE65100);
+        final letter = String.fromCharCode(65 + i); // A, B
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          child: ElevatedButton(
+            onPressed: () => game.answerQuestion(i),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: color,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 16, vertical: 14),
+              elevation: 4,
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.25),
+                    shape: BoxShape.circle,
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    letter,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Text(
+                    q.options[i],
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w600,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }),
     );
   }
 }

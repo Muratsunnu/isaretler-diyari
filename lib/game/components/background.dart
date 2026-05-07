@@ -63,7 +63,7 @@ class PixelBackground extends PositionComponent with HasGameReference {
 
 /// Yer zemini — level'e göre renk değiştirebilir.
 class Ground extends PositionComponent {
-  final double scrollSpeed;
+  double scrollSpeed;
   double _offset = 0;
   Color _grassColor;
   Color _grassLight;

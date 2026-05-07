@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../models/question.dart';
 import '../my_game.dart';
 
 class InfoOverlay extends StatelessWidget {
@@ -44,44 +45,74 @@ class InfoOverlay extends StatelessWidget {
                     ],
                   ),
                   const Divider(height: 24),
-                  const Text(
-                    'Doğru kullanım:',
-                    style: TextStyle(
+                  Text(
+                    q.format == QuestionFormat.fillBlank
+                        ? 'Doğru kullanım:'
+                        : 'Doğru cevap:',
+                    style: const TextStyle(
                       fontSize: 14,
                       color: Colors.black54,
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE8F5E9),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFF66BB6A)),
-                    ),
-                    child: RichText(
-                      textAlign: TextAlign.center,
-                      text: TextSpan(
-                        style: const TextStyle(
-                          fontSize: 20,
-                          color: Colors.black87,
-                          height: 1.4,
+                  if (q.format == QuestionFormat.fillBlank)
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE8F5E9),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFF66BB6A)),
+                      ),
+                      child: RichText(
+                        textAlign: TextAlign.center,
+                        text: TextSpan(
+                          style: const TextStyle(
+                            fontSize: 20,
+                            color: Colors.black87,
+                            height: 1.4,
+                          ),
+                          children: [
+                            TextSpan(text: q.before),
+                            TextSpan(
+                              text: q.options[q.correctIndex],
+                              style: const TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF2E7D32),
+                              ),
+                            ),
+                            TextSpan(text: q.after),
+                          ],
                         ),
+                      ),
+                    )
+                  else
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE8F5E9),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFF66BB6A)),
+                      ),
+                      child: Row(
                         children: [
-                          TextSpan(text: q.before),
-                          TextSpan(
-                            text: q.options[q.correctIndex],
-                            style: const TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF2E7D32),
+                          const Icon(Icons.check_circle,
+                              color: Color(0xFF2E7D32), size: 28),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              q.options[q.correctIndex],
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF1B5E20),
+                                height: 1.4,
+                              ),
                             ),
                           ),
-                          TextSpan(text: q.after),
                         ],
                       ),
                     ),
-                  ),
                   const SizedBox(height: 16),
                   Text(
                     q.explanation,
@@ -91,7 +122,7 @@ class InfoOverlay extends StatelessWidget {
                   if (outOfLives)
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 8),
+                          horizontal: 12, vertical: 10),
                       decoration: BoxDecoration(
                         color: const Color(0xFFFFEBEE),
                         borderRadius: BorderRadius.circular(10),
@@ -104,7 +135,7 @@ class InfoOverlay extends StatelessWidget {
                           SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'Canın bitti! Bu sorudan puan yok, sıradaki engele geçiyoruz.',
+                              'Canın bitti! Yarışman burada sona eriyor.',
                               style: TextStyle(
                                 fontSize: 14,
                                 color: Color(0xFFB71C1C),
@@ -120,19 +151,20 @@ class InfoOverlay extends StatelessWidget {
                     height: 52,
                     child: ElevatedButton.icon(
                       onPressed: outOfLives
-                          ? game.closeInfoAndAdvance
+                          ? game.closeInfoAndEndGame
                           : game.closeInfoAndRetry,
                       icon: Icon(
-                          outOfLives ? Icons.arrow_forward : Icons.refresh),
+                        outOfLives ? Icons.flag_circle : Icons.refresh,
+                      ),
                       label: Text(
                         outOfLives
-                            ? 'Anladım, devam et'
+                            ? 'Yarışmayı bitir'
                             : 'Anladım, tekrar deneyeceğim',
                         style: const TextStyle(fontSize: 16),
                       ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: outOfLives
-                            ? const Color(0xFF455A64)
+                            ? const Color(0xFFC62828)
                             : const Color(0xFF2E7D32),
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(

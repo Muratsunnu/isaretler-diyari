@@ -28,10 +28,11 @@ class _GameScreenState extends State<GameScreen> {
     _game.onPhaseChange = () {
       if (mounted) setState(() {});
     };
-    _game.onFinished = (s, c) => _handleFinished(s, c);
+    _game.onFinished = (s, c, go) => _handleFinished(s, c, go);
   }
 
-  Future<void> _handleFinished(int score, int correctFirstTry) async {
+  Future<void> _handleFinished(
+      int score, int correctFirstTry, bool gameOver) async {
     if (_saved) return;
     _saved = true;
     await _storage.addScore(PlayerScore(
@@ -48,6 +49,7 @@ class _GameScreenState extends State<GameScreen> {
           playerName: widget.playerName,
           score: score,
           correctFirstTry: correctFirstTry,
+          gameOver: gameOver,
         ),
       ),
     );

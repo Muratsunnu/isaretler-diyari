@@ -5,6 +5,7 @@ class ResultScreen extends StatelessWidget {
   final String playerName;
   final int score;
   final int correctFirstTry;
+  final bool gameOver;
   static const int _totalQuestions = 9;
 
   const ResultScreen({
@@ -12,9 +13,15 @@ class ResultScreen extends StatelessWidget {
     required this.playerName,
     required this.score,
     required this.correctFirstTry,
+    this.gameOver = false,
   });
 
+  String get _title => gameOver ? 'Yarışma yarıda kaldı, $playerName' : 'Tebrikler $playerName!';
+
   String get _message {
+    if (gameOver) {
+      return 'Canın bittiği için yarışman bitti. Bilgi notlarını okudun, tekrar denersen başarırsın!';
+    }
     if (correctFirstTry == _totalQuestions) {
       return 'Mükemmel! Tüm soruları ilk denemede bildin!';
     }
@@ -24,9 +31,10 @@ class ResultScreen extends StatelessWidget {
   }
 
   String get _emoji {
-    if (correctFirstTry == 5) return '🏆';
-    if (correctFirstTry >= 3) return '🌟';
-    if (correctFirstTry >= 1) return '👍';
+    if (gameOver) return '💔';
+    if (correctFirstTry == _totalQuestions) return '🏆';
+    if (correctFirstTry >= 6) return '🌟';
+    if (correctFirstTry >= 3) return '👍';
     return '📚';
   }
 
@@ -60,7 +68,7 @@ class ResultScreen extends StatelessWidget {
                         Text(_emoji, style: const TextStyle(fontSize: 72)),
                         const SizedBox(height: 8),
                         Text(
-                          'Tebrikler $playerName!',
+                          _title,
                           style: const TextStyle(
                             fontSize: 26,
                             fontWeight: FontWeight.bold,
@@ -72,12 +80,16 @@ class ResultScreen extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF2E7D32),
+                            color: gameOver
+                                ? const Color(0xFFC62828)
+                                : const Color(0xFF2E7D32),
                             borderRadius: BorderRadius.circular(14),
                           ),
-                          child: const Text(
-                            '3 Seviye Tamamlandı 🎉',
-                            style: TextStyle(
+                          child: Text(
+                            gameOver
+                                ? 'Yarışma yarıda kaldı 💔'
+                                : '3 Seviye Tamamlandı 🎉',
+                            style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
                               fontSize: 13,

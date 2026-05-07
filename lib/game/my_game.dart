@@ -37,7 +37,12 @@ class IsaretlerGame extends FlameGame {
   FinishLine? finishLine;
 
   GamePhase phase = GamePhase.running;
-  double scrollSpeed = 340;
+  // Mevcut level'ın çarpanına göre ölçeklenir
+  static const double _baseScrollSpeed = 340;
+  double get scrollSpeed =>
+      _baseScrollSpeed * currentLevel.obstacleSpeedMultiplier;
+  // Oyuncu yarışmayı tamamlayamadan kaybetti mi
+  bool gameOver = false;
 
   // Mevcut level + bir sonrakine geçiş için referans
   GameLevel currentLevel = GameLevel.level1;
@@ -68,7 +73,7 @@ class IsaretlerGame extends FlameGame {
   final Random _rng = Random();
 
   void Function()? onPhaseChange;
-  void Function(int finalScore, int correctFirstTry)? onFinished;
+  void Function(int finalScore, int correctFirstTry, bool gameOver)? onFinished;
 
   @override
   Color backgroundColor() => Color(currentLevel.skyColor);
@@ -114,9 +119,9 @@ class IsaretlerGame extends FlameGame {
 
   void _spawnFinishLine() {
     final fl = FinishLine(
-      // Daha yakına spawn et + 2x hızda gelsin → çok daha hızlı varış
-      position: Vector2(size.x * 0.6, size.y - 80),
-      speed: scrollSpeed * 2.2,
+      // Diğer engeller gibi sağdan gelir, mevcut level hızıyla
+      position: Vector2(size.x + 50, size.y - 80),
+      speed: scrollSpeed,
       triggerX: player.position.x,
       onCrossed: _onFinishCrossed,
     );
@@ -217,11 +222,12 @@ class IsaretlerGame extends FlameGame {
     _passObstacle(success: success);
   }
 
-  /// Info ekranındaki "Devam et" — can yok, retry yok, sıradakine geç
-  void closeInfoAndAdvance() {
+  /// Info ekranındaki "Yarışmayı bitir" — can yok, oyun biter, sonuç ekranı
+  void closeInfoAndEndGame() {
     overlays.remove(infoOverlay);
     isOutOfLivesInfo = false;
-    _onQuestionDone(success: false);
+    gameOver = true; // Yarıda kaldı
+    _finish();
   }
 
   void closeInfoAndRetry() {
@@ -283,9 +289,10 @@ class IsaretlerGame extends FlameGame {
     isOutOfLivesInfo = false;
     questionsInCurrentLevel = 0;
 
-    // Görsel temayı değiştir
+    // Görsel temayı + zemin hızını yeni level'e göre değiştir
     await bg.swapAsset(currentLevel.backgroundAsset);
     ground.setGrassColor(Color(currentLevel.groundColor));
+    ground.scrollSpeed = scrollSpeed;
 
     overlays.remove(levelTransitionOverlay);
     _refillPool();
@@ -300,6 +307,6 @@ class IsaretlerGame extends FlameGame {
   void _finish() {
     phase = GamePhase.finished;
     player.isRunning = true;
-    onFinished?.call(score, correctFirstTry);
+    onFinished?.call(score, correctFirstTry, gameOver);
   }
 }
