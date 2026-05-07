@@ -2,18 +2,32 @@ import 'dart:ui' as ui;
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 
-/// Tile'lı pixel art arka plan — sola doğru yavaşça kayar (parallax efekti).
+/// Tile'lı pixel art arka plan — sola doğru yavaşça kayar.
+/// Asset yolu runtime'da değiştirilebilir (level değişiminde).
 class PixelBackground extends PositionComponent with HasGameReference {
   ui.Image? _img;
   double _offset = 0;
   final double scrollSpeed;
+  String _assetPath;
 
-  PixelBackground({required Vector2 size, this.scrollSpeed = 25})
-      : super(size: size, priority: -10);
+  PixelBackground({
+    required Vector2 size,
+    required String assetPath,
+    this.scrollSpeed = 25,
+  })  : _assetPath = assetPath,
+        super(size: size, priority: -10);
 
   @override
   Future<void> onLoad() async {
-    _img = await game.images.load('bg/Blue.png');
+    _img = await game.images.load(_assetPath);
+  }
+
+  /// Yeni level başladığında çağrılır — yeni bg yüklenir.
+  Future<void> swapAsset(String newPath) async {
+    if (_assetPath == newPath) return;
+    _assetPath = newPath;
+    final img = await game.images.load(newPath);
+    _img = img;
   }
 
   @override
@@ -47,41 +61,61 @@ class PixelBackground extends PositionComponent with HasGameReference {
   }
 }
 
-/// Yer zemini — pixel art tarzına yakın yeşil/kahverengi katmanlar.
+/// Yer zemini — level'e göre renk değiştirebilir.
 class Ground extends PositionComponent {
   final double scrollSpeed;
   double _offset = 0;
-  Ground({required Vector2 position, required Vector2 size, required this.scrollSpeed})
-      : super(position: position, size: size, priority: -1);
+  Color _grassColor;
+  Color _grassLight;
+  Color _grassDark;
+  final Color _dirtColor = const Color(0xFF6D4C41);
+  final Color _dirtShade = const Color(0xFF5D4037);
+
+  Ground({
+    required Vector2 position,
+    required Vector2 size,
+    required this.scrollSpeed,
+    Color grassColor = const Color(0xFF4CAF50),
+  })  : _grassColor = grassColor,
+        _grassLight = _lighter(grassColor, 0.12),
+        _grassDark = _darker(grassColor, 0.18),
+        super(position: position, size: size, priority: -1);
+
+  void setGrassColor(Color c) {
+    _grassColor = c;
+    _grassLight = _lighter(c, 0.12);
+    _grassDark = _darker(c, 0.18);
+  }
+
+  static Color _lighter(Color c, double t) =>
+      Color.lerp(c, Colors.white, t) ?? c;
+  static Color _darker(Color c, double t) =>
+      Color.lerp(c, Colors.black, t) ?? c;
 
   @override
   void render(Canvas canvas) {
-    final groundPaint = Paint()..color = const Color(0xFF4CAF50);
-    canvas.drawRect(size.toRect(), groundPaint);
+    canvas.drawRect(size.toRect(), Paint()..color = _grassColor);
 
-    // Çim üst şeridi (daha açık yeşil)
-    final grassTop = Paint()..color = const Color(0xFF66BB6A);
+    // Çim üst şeridi
     canvas.drawRect(
       Rect.fromLTWH(0, 0, size.x, size.y * 0.18),
-      grassTop,
+      Paint()..color = _grassLight,
     );
 
     // Toprak (alt katman)
-    final dirtPaint = Paint()..color = const Color(0xFF6D4C41);
     canvas.drawRect(
       Rect.fromLTWH(0, size.y * 0.42, size.x, size.y * 0.58),
-      dirtPaint,
+      Paint()..color = _dirtColor,
     );
 
     // Toprak üst gölgesi
-    final dirtShade = Paint()..color = const Color(0xFF5D4037);
     canvas.drawRect(
       Rect.fromLTWH(0, size.y * 0.42, size.x, 4),
-      dirtShade,
+      Paint()..color = _dirtShade,
     );
 
     // Çim tutamları (kayan)
-    final tuftPaint = Paint()..color = const Color(0xFF388E3C);
+    final tuftPaint = Paint()..color = _grassDark;
     const tuftSpacing = 36.0;
     final start = -(_offset % tuftSpacing);
     for (double x = start; x < size.x; x += tuftSpacing) {

@@ -1,25 +1,25 @@
 import 'package:flutter/material.dart';
-import '../models/game_level.dart';
 import 'home_screen.dart';
 
 class ResultScreen extends StatelessWidget {
   final String playerName;
   final int score;
   final int correctFirstTry;
-  final GameLevel level;
+  static const int _totalQuestions = 9;
 
   const ResultScreen({
     super.key,
     required this.playerName,
     required this.score,
     required this.correctFirstTry,
-    required this.level,
   });
 
   String get _message {
-    if (correctFirstTry == 5) return 'Mükemmel! Tüm soruları ilk denemede bildin!';
-    if (correctFirstTry >= 3) return 'Harika iş çıkardın!';
-    if (correctFirstTry >= 1) return 'İyi denemeydi, biraz daha pratik!';
+    if (correctFirstTry == _totalQuestions) {
+      return 'Mükemmel! Tüm soruları ilk denemede bildin!';
+    }
+    if (correctFirstTry >= 6) return 'Harika iş çıkardın!';
+    if (correctFirstTry >= 3) return 'İyi denemeydi, biraz daha pratik!';
     return 'Pes etme! Bilgi notlarıyla öğrendin, tekrar dene.';
   }
 
@@ -72,12 +72,12 @@ class ResultScreen extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
-                            color: Color(level.color),
+                            color: const Color(0xFF2E7D32),
                             borderRadius: BorderRadius.circular(14),
                           ),
-                          child: Text(
-                            '${level.label} • ${level.description}',
-                            style: const TextStyle(
+                          child: const Text(
+                            '3 Seviye Tamamlandı 🎉',
+                            style: TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
                               fontSize: 13,
@@ -99,7 +99,7 @@ class ResultScreen extends StatelessWidget {
                         const SizedBox(height: 12),
                         _Stat(
                           label: 'İlk Denemede Doğru',
-                          value: '$correctFirstTry / 5',
+                          value: '$correctFirstTry / $_totalQuestions',
                           color: const Color(0xFF1976D2),
                         ),
                         const SizedBox(height: 28),

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../models/game_level.dart';
 import '../models/player_score.dart';
 import '../services/storage_service.dart';
 import 'game_screen.dart';
@@ -27,7 +26,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (mounted) setState(() => _leaderboard = list);
   }
 
-  void _start(GameLevel level) {
+  void _start() {
     final name = _nameController.text.trim();
     if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -38,7 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
     Navigator.of(context)
         .push(
           MaterialPageRoute(
-            builder: (_) => GameScreen(playerName: name, level: level),
+            builder: (_) => GameScreen(playerName: name),
           ),
         )
         .then((_) => _refresh());
@@ -101,23 +100,67 @@ class _HomeScreenState extends State<HomeScreen> {
                                 prefixIcon: Icon(Icons.person),
                                 border: OutlineInputBorder(),
                               ),
+                              onSubmitted: (_) => _start(),
                             ),
                             const SizedBox(height: 18),
-                            const Text(
-                              'Seviye seç',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
+                            Container(
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFE8F5E9),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: const Color(0xFF66BB6A),
+                                ),
+                              ),
+                              child: const Column(
+                                crossAxisAlignment:
+                                    CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '3 seviye, her seviyede 3 soru',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF1B5E20),
+                                    ),
+                                  ),
+                                  SizedBox(height: 6),
+                                  Text(
+                                    '• Seviye 1: 10 sn\n'
+                                    '• Seviye 2: 8 sn\n'
+                                    '• Seviye 3: 5 sn\n'
+                                    'Her seviyede 1 yanlış cevap hakkın var!',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: Colors.black87,
+                                      height: 1.5,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            const SizedBox(height: 10),
-                            for (final lvl in GameLevel.values) ...[
-                              _LevelButton(
-                                level: lvl,
-                                onTap: () => _start(lvl),
+                            const SizedBox(height: 18),
+                            SizedBox(
+                              height: 56,
+                              child: ElevatedButton.icon(
+                                onPressed: _start,
+                                icon: const Icon(Icons.play_arrow, size: 28),
+                                label: const Text(
+                                  'Oyuna Başla',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF2E7D32),
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                ),
                               ),
-                              const SizedBox(height: 10),
-                            ],
+                            ),
                           ],
                         ),
                       ),
@@ -166,7 +209,12 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                               )
                             else
-                              ..._leaderboard.take(10).toList().asMap().entries.map(
+                              ..._leaderboard
+                                  .take(10)
+                                  .toList()
+                                  .asMap()
+                                  .entries
+                                  .map(
                                     (e) => _LeaderRow(
                                       rank: e.key + 1,
                                       score: e.value,
@@ -181,87 +229,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _LevelButton extends StatelessWidget {
-  final GameLevel level;
-  final VoidCallback onTap;
-  const _LevelButton({required this.level, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final color = Color(level.color);
-    return SizedBox(
-      height: 72,
-      child: ElevatedButton(
-        onPressed: onTap,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: color,
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.25),
-                shape: BoxShape.circle,
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                '${level.number}',
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    level.label,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    level.description,
-                    style: const TextStyle(fontSize: 13),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.timer, size: 18),
-                Text(
-                  '${level.questionTime.toInt()} sn',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(width: 6),
-            const Icon(Icons.play_arrow, size: 28),
-          ],
         ),
       ),
     );
@@ -300,24 +267,6 @@ class _LeaderRow extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          if (score.level != null) ...[
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: const Color(0xFF2E7D32).withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                'S${score.level}',
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF2E7D32),
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-          ],
           Text(
             '${score.score} puan',
             style: const TextStyle(

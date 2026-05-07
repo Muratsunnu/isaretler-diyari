@@ -65,7 +65,7 @@ class _QuestionOverlayState extends State<QuestionOverlay> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
-                          'Soru ${game.questionsAsked + 1}/${IsaretlerGame.totalQuestions}',
+                          'Soru ${game.questionsInCurrentLevel + 1}/${IsaretlerGame.questionsPerLevel}',
                           style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
@@ -77,11 +77,11 @@ class _QuestionOverlayState extends State<QuestionOverlay> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: Color(game.level.color),
+                          color: Color(game.currentLevel.color),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
-                          game.level.label,
+                          game.currentLevel.label,
                           style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,

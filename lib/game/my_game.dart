@@ -9,31 +9,53 @@ import 'components/finish_line.dart';
 import 'components/obstacle.dart';
 import 'components/player.dart';
 
-enum GamePhase { running, asking, info, finishing, finished }
+enum GamePhase {
+  running,
+  asking,
+  info,
+  levelTransition,
+  finishing,
+  finished,
+}
 
 class IsaretlerGame extends FlameGame {
-  static const int totalQuestions = 5;
+  // Her level'da kaç soru
+  static const int questionsPerLevel = 3;
   static const String questionOverlay = 'question';
   static const String infoOverlay = 'info';
+  static const String levelTransitionOverlay = 'levelTransition';
 
-  final GameLevel level;
+  // Geriye dönük: bazı yerler "totalQuestions" kullanıyor (3 level × 3)
+  static const int totalQuestions = questionsPerLevel * 3;
 
-  IsaretlerGame({required this.level});
+  IsaretlerGame();
 
   late RunnerPlayer player;
   late Ground ground;
+  late PixelBackground bg;
   Obstacle? activeObstacle;
   FinishLine? finishLine;
 
   GamePhase phase = GamePhase.running;
   double scrollSpeed = 340;
+
+  // Mevcut level + bir sonrakine geçiş için referans
+  GameLevel currentLevel = GameLevel.level1;
+  GameLevel? pendingNextLevel;
+
+  /// Her level'da en fazla 1 yanlış cevap → bilgi+tekrar; ikincide kayıt edip geç
+  bool _wrongUsedThisLevel = false;
+  // Mevcut level'da kaç soru cevaplandı (3 olunca level biter)
+  int questionsInCurrentLevel = 0;
+
+  // Toplam istatistikler
   int questionsAsked = 0;
   int correctFirstTry = 0;
   int score = 0;
 
-  // Soru süresi (saniye)
+  // Soru sayacı
   double remainingTime = 0;
-  double get maxTime => level.questionTime;
+  double get maxTime => currentLevel.questionTime;
 
   Question? currentQuestion;
   bool _currentIsRetry = false;
@@ -45,16 +67,18 @@ class IsaretlerGame extends FlameGame {
   void Function(int finalScore, int correctFirstTry)? onFinished;
 
   @override
-  Color backgroundColor() => const Color(0xFF63A1FF);
+  Color backgroundColor() => Color(currentLevel.skyColor);
 
   @override
   Future<void> onLoad() async {
-    add(PixelBackground(size: size));
+    bg = PixelBackground(size: size, assetPath: currentLevel.backgroundAsset);
+    add(bg);
 
     ground = Ground(
       position: Vector2(0, size.y - 80),
       size: Vector2(size.x, 80),
       scrollSpeed: scrollSpeed,
+      grassColor: Color(currentLevel.groundColor),
     );
     add(ground);
 
@@ -68,7 +92,7 @@ class IsaretlerGame extends FlameGame {
   void _refillPool() {
     _questionPool
       ..clear()
-      ..addAll(questionsForLevel(level))
+      ..addAll(questionsForLevel(currentLevel))
       ..shuffle(_rng);
   }
 
@@ -102,7 +126,6 @@ class IsaretlerGame extends FlameGame {
 
   @override
   void update(double dt) {
-    // Soru sırasında sadece zamanlayıcı çalışır
     if (phase == GamePhase.asking) {
       remainingTime -= dt;
       if (remainingTime <= 0 && currentQuestion != null) {
@@ -112,10 +135,10 @@ class IsaretlerGame extends FlameGame {
       return;
     }
     if (phase == GamePhase.info) return;
+    if (phase == GamePhase.levelTransition) return;
 
     super.update(dt);
 
-    // Engel tetikleme sadece koşma fazında
     if (phase != GamePhase.running) return;
 
     final obstacle = activeObstacle;
@@ -133,7 +156,7 @@ class IsaretlerGame extends FlameGame {
     if (_questionPool.isEmpty) _refillPool();
     currentQuestion = _questionPool.removeLast();
     _currentIsRetry = false;
-    remainingTime = level.questionTime;
+    remainingTime = currentLevel.questionTime;
     phase = GamePhase.asking;
     player.isRunning = false;
     overlays.add(questionOverlay);
@@ -141,11 +164,8 @@ class IsaretlerGame extends FlameGame {
   }
 
   void _onTimeout() {
-    // Süre doldu — yanlış cevap gibi davran, bilgi ekranı göster
-    phase = GamePhase.info;
-    overlays.remove(questionOverlay);
-    overlays.add(infoOverlay);
-    onPhaseChange?.call();
+    // Süre doldu = yanlış
+    _handleWrong();
   }
 
   void answerQuestion(int chosenIndex) {
@@ -160,21 +180,37 @@ class IsaretlerGame extends FlameGame {
       } else {
         score += 5;
       }
-      questionsAsked++;
-      overlays.remove(questionOverlay);
-      _passObstacle();
+      _onQuestionDone();
     } else {
+      _handleWrong();
+    }
+  }
+
+  void _handleWrong() {
+    if (!_wrongUsedThisLevel) {
+      // Bu level'daki tek joker harcanıyor: bilgi göster + tekrar dene
+      _wrongUsedThisLevel = true;
       phase = GamePhase.info;
       overlays.remove(questionOverlay);
       overlays.add(infoOverlay);
       onPhaseChange?.call();
+    } else {
+      // Joker bitti — yanlışı kaydet, sonraki engele geç (info gösterme)
+      _onQuestionDone();
     }
+  }
+
+  void _onQuestionDone() {
+    questionsAsked++;
+    questionsInCurrentLevel++;
+    overlays.remove(questionOverlay);
+    _passObstacle();
   }
 
   void closeInfoAndRetry() {
     overlays.remove(infoOverlay);
     _currentIsRetry = true;
-    remainingTime = level.questionTime;
+    remainingTime = currentLevel.questionTime;
     phase = GamePhase.asking;
     overlays.add(questionOverlay);
     onPhaseChange?.call();
@@ -194,13 +230,52 @@ class IsaretlerGame extends FlameGame {
       activeObstacle?.removeFromParent();
       activeObstacle = null;
 
-      if (questionsAsked >= totalQuestions) {
-        phase = GamePhase.finishing;
-        Future.delayed(const Duration(milliseconds: 600), _spawnFinishLine);
+      if (questionsInCurrentLevel >= questionsPerLevel) {
+        _onLevelComplete();
       } else {
         Future.delayed(const Duration(milliseconds: 500), _spawnObstacle);
       }
     });
+  }
+
+  void _onLevelComplete() {
+    final next = currentLevel.next;
+    if (next == null) {
+      // Son level → bitiş çizgisi
+      phase = GamePhase.finishing;
+      Future.delayed(const Duration(milliseconds: 600), _spawnFinishLine);
+    } else {
+      // Level transition overlay göster
+      pendingNextLevel = next;
+      phase = GamePhase.levelTransition;
+      player.isRunning = false;
+      overlays.add(levelTransitionOverlay);
+      onPhaseChange?.call();
+    }
+  }
+
+  Future<void> advanceToNextLevel() async {
+    final next = pendingNextLevel;
+    if (next == null) return;
+
+    // Level değişkenleri
+    currentLevel = next;
+    pendingNextLevel = null;
+    _wrongUsedThisLevel = false;
+    questionsInCurrentLevel = 0;
+
+    // Görsel temayı değiştir
+    await bg.swapAsset(currentLevel.backgroundAsset);
+    ground.setGrassColor(Color(currentLevel.groundColor));
+
+    overlays.remove(levelTransitionOverlay);
+    _refillPool();
+
+    phase = GamePhase.running;
+    player.isRunning = true;
+    onPhaseChange?.call();
+
+    Future.delayed(const Duration(milliseconds: 400), _spawnObstacle);
   }
 
   void _finish() {

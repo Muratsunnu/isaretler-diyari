@@ -2,20 +2,15 @@ import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import '../game/my_game.dart';
 import '../game/overlays/info_overlay.dart';
+import '../game/overlays/level_transition_overlay.dart';
 import '../game/overlays/question_overlay.dart';
-import '../models/game_level.dart';
 import '../models/player_score.dart';
 import '../services/storage_service.dart';
 import 'result_screen.dart';
 
 class GameScreen extends StatefulWidget {
   final String playerName;
-  final GameLevel level;
-  const GameScreen({
-    super.key,
-    required this.playerName,
-    required this.level,
-  });
+  const GameScreen({super.key, required this.playerName});
 
   @override
   State<GameScreen> createState() => _GameScreenState();
@@ -29,7 +24,7 @@ class _GameScreenState extends State<GameScreen> {
   @override
   void initState() {
     super.initState();
-    _game = IsaretlerGame(level: widget.level);
+    _game = IsaretlerGame();
     _game.onPhaseChange = () {
       if (mounted) setState(() {});
     };
@@ -44,7 +39,7 @@ class _GameScreenState extends State<GameScreen> {
       score: score,
       correctFirstTry: correctFirstTry,
       playedAt: DateTime.now(),
-      level: widget.level.number,
+      level: 3,
     ));
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
@@ -53,7 +48,6 @@ class _GameScreenState extends State<GameScreen> {
           playerName: widget.playerName,
           score: score,
           correctFirstTry: correctFirstTry,
-          level: widget.level,
         ),
       ),
     );
@@ -70,6 +64,8 @@ class _GameScreenState extends State<GameScreen> {
               IsaretlerGame.questionOverlay: (_, g) =>
                   QuestionOverlay(game: g),
               IsaretlerGame.infoOverlay: (_, g) => InfoOverlay(game: g),
+              IsaretlerGame.levelTransitionOverlay: (_, g) =>
+                  LevelTransitionOverlay(game: g),
             },
           ),
           Positioned(
@@ -79,23 +75,17 @@ class _GameScreenState extends State<GameScreen> {
               child: Wrap(
                 spacing: 8,
                 children: [
-                  _Pill(
-                    icon: Icons.person,
-                    label: widget.playerName,
-                  ),
-                  _Pill(
-                    icon: Icons.star,
-                    label: '${_game.score}',
-                  ),
+                  _Pill(icon: Icons.person, label: widget.playerName),
+                  _Pill(icon: Icons.star, label: '${_game.score}'),
                   _Pill(
                     icon: Icons.help_outline,
                     label:
-                        '${_game.questionsAsked}/${IsaretlerGame.totalQuestions}',
+                        '${_game.questionsInCurrentLevel}/${IsaretlerGame.questionsPerLevel}',
                   ),
                   _Pill(
                     icon: Icons.flag,
-                    label: widget.level.label,
-                    color: Color(widget.level.color),
+                    label: _game.currentLevel.label,
+                    color: Color(_game.currentLevel.color),
                   ),
                 ],
               ),
@@ -107,7 +97,7 @@ class _GameScreenState extends State<GameScreen> {
             child: SafeArea(
               child: IconButton.filled(
                 style: IconButton.styleFrom(
-                  backgroundColor: Colors.white.withValues(alpha:0.85),
+                  backgroundColor: Colors.white.withValues(alpha: 0.85),
                   foregroundColor: Colors.black87,
                 ),
                 icon: const Icon(Icons.close),
@@ -134,11 +124,11 @@ class _Pill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha:0.9),
+        color: Colors.white.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha:0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -151,10 +141,7 @@ class _Pill extends StatelessWidget {
           const SizedBox(width: 6),
           Text(
             label,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
           ),
         ],
       ),
