@@ -86,19 +86,13 @@ class Obstacle extends PositionComponent with HasGameReference {
     const frameDur = 0.10;
     final frame = ((_animTime / frameDur).floor() % frameCount).toInt();
 
-    // Sprite sağa bakıyor — yatay flip ile sola çevir (oyuncuya doğru)
-    canvas.save();
-    canvas.translate(size.x, 0);
-    canvas.scale(-1, 1);
-
+    // Köpek oyuncuya doğru koşuyor — orijinal yönünde çizilsin (flip yok)
     canvas.drawImageRect(
       img,
       Rect.fromLTWH(frame * frameW, 0, frameW, frameH),
-      Rect.fromLTWH(0, 0, size.x, size.y),
+      size.toRect(),
       Paint()..filterQuality = FilterQuality.none,
     );
-
-    canvas.restore();
   }
 
   String get displayName {

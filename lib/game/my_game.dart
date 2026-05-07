@@ -110,8 +110,9 @@ class IsaretlerGame extends FlameGame {
 
   void _spawnFinishLine() {
     final fl = FinishLine(
-      position: Vector2(size.x + 50, size.y - 80),
-      speed: scrollSpeed,
+      // Daha yakına spawn et + 2x hızda gelsin → çok daha hızlı varış
+      position: Vector2(size.x * 0.6, size.y - 80),
+      speed: scrollSpeed * 2.2,
       triggerX: player.position.x,
       onCrossed: _onFinishCrossed,
     );
@@ -241,9 +242,9 @@ class IsaretlerGame extends FlameGame {
   void _onLevelComplete() {
     final next = currentLevel.next;
     if (next == null) {
-      // Son level → bitiş çizgisi
+      // Son level → bitiş çizgisi (hemen)
       phase = GamePhase.finishing;
-      Future.delayed(const Duration(milliseconds: 600), _spawnFinishLine);
+      Future.delayed(const Duration(milliseconds: 200), _spawnFinishLine);
     } else {
       // Level transition overlay göster
       pendingNextLevel = next;
