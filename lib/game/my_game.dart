@@ -62,10 +62,6 @@ class IsaretlerGame extends FlameGame {
   int correctFirstTry = 0;
   int score = 0;
 
-  // Soru sayacı
-  double remainingTime = 0;
-  double get maxTime => currentLevel.questionTime;
-
   Question? currentQuestion;
   bool _currentIsRetry = false;
 
@@ -136,14 +132,7 @@ class IsaretlerGame extends FlameGame {
 
   @override
   void update(double dt) {
-    if (phase == GamePhase.asking) {
-      remainingTime -= dt;
-      if (remainingTime <= 0 && currentQuestion != null) {
-        remainingTime = 0;
-        _onTimeout();
-      }
-      return;
-    }
+    if (phase == GamePhase.asking) return;
     if (phase == GamePhase.info) return;
     if (phase == GamePhase.levelTransition) return;
 
@@ -166,16 +155,10 @@ class IsaretlerGame extends FlameGame {
     if (_questionPool.isEmpty) _refillPool();
     currentQuestion = _questionPool.removeLast();
     _currentIsRetry = false;
-    remainingTime = currentLevel.questionTime;
     phase = GamePhase.asking;
     player.isRunning = false;
     overlays.add(questionOverlay);
     onPhaseChange?.call();
-  }
-
-  void _onTimeout() {
-    // Süre doldu = yanlış
-    _handleWrong();
   }
 
   void answerQuestion(int chosenIndex) {
@@ -233,7 +216,6 @@ class IsaretlerGame extends FlameGame {
   void closeInfoAndRetry() {
     overlays.remove(infoOverlay);
     _currentIsRetry = true;
-    remainingTime = currentLevel.questionTime;
     phase = GamePhase.asking;
     overlays.add(questionOverlay);
     onPhaseChange?.call();

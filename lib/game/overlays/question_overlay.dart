@@ -1,42 +1,15 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../models/question.dart';
 import '../my_game.dart';
 
-class QuestionOverlay extends StatefulWidget {
+class QuestionOverlay extends StatelessWidget {
   final IsaretlerGame game;
   const QuestionOverlay({super.key, required this.game});
 
   @override
-  State<QuestionOverlay> createState() => _QuestionOverlayState();
-}
-
-class _QuestionOverlayState extends State<QuestionOverlay> {
-  Timer? _ticker;
-
-  @override
-  void initState() {
-    super.initState();
-    _ticker = Timer.periodic(const Duration(milliseconds: 100), (_) {
-      if (mounted) setState(() {});
-    });
-  }
-
-  @override
-  void dispose() {
-    _ticker?.cancel();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final game = widget.game;
     final q = game.currentQuestion;
     if (q == null) return const SizedBox.shrink();
-
-    final ratio = (game.remainingTime / game.maxTime).clamp(0.0, 1.0);
-    final isLow = game.remainingTime <= 3.0;
-    final timerColor = isLow ? const Color(0xFFE53935) : const Color(0xFF2E7D32);
 
     return Container(
       color: Colors.black54,
@@ -95,34 +68,6 @@ class _QuestionOverlayState extends State<QuestionOverlay> {
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-                  // Sayaç çubuğu + saniye
-                  Row(
-                    children: [
-                      Icon(Icons.timer, size: 18, color: timerColor),
-                      const SizedBox(width: 6),
-                      Text(
-                        '${game.remainingTime.ceil()} sn',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: timerColor,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(6),
-                          child: LinearProgressIndicator(
-                            value: ratio,
-                            minHeight: 10,
-                            backgroundColor: Colors.grey.shade200,
-                            valueColor: AlwaysStoppedAnimation(timerColor),
-                          ),
                         ),
                       ),
                     ],

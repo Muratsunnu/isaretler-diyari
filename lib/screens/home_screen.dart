@@ -126,10 +126,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                   SizedBox(height: 6),
                                   Text(
-                                    '• Seviye 1: 10 sn\n'
-                                    '• Seviye 2: 8 sn\n'
-                                    '• Seviye 3: 5 sn\n'
-                                    'Her seviyede 1 yanlış cevap hakkın var!',
+                                    '• Her seviyede engeller daha hızlı geliyor\n'
+                                    '• Her seviyede 1 yanlış cevap hakkın var\n'
+                                    '• Hak biterse yarışman sona erer!',
                                     style: TextStyle(
                                       fontSize: 13,
                                       color: Colors.black87,

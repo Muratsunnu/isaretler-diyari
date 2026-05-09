@@ -100,11 +100,11 @@ class LevelTransitionOverlay extends StatelessWidget {
                         const SizedBox(height: 12),
                         Row(
                           children: [
-                            const Icon(Icons.timer,
+                            const Icon(Icons.speed,
                                 color: Colors.white, size: 18),
                             const SizedBox(width: 6),
                             Text(
-                              'Soru başına ${next.questionTime.toInt()} sn',
+                              'Engeller ${next.obstacleSpeedMultiplier == 1.0 ? "normal hızda" : "${(next.obstacleSpeedMultiplier * 100).round() - 100}% daha hızlı"}',
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 14,
