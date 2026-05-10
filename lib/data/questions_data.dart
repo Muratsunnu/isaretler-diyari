@@ -62,10 +62,10 @@ const List<Question> level2Questions = [
   Question(
     before: 'Mete çok mutluydu',
     after: ' Çünkü en sevdiği arkadaşı ona misafirliğe gelmişti.',
-    options: ['.', ':'],
+    options: ['!', ':'],
     correctIndex: 0,
     explanation:
-        '"Çünkü" yeni bir cümle başlatıyor (büyük harfle yazılmış). Bu yüzden öncesinde önceki cümle nokta ile bitirilir.',
+        '"Çünkü" yeni bir cümle başlatıyor (büyük harfle yazılmış). Önceki cümle "Mete çok mutluydu!" güçlü bir duygu ifade ettiği için ünlem işareti uygundur.',
     topic: PunctuationTopic.nokta,
   ),
   // Q3 — Millet tanımı
